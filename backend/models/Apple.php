@@ -45,20 +45,39 @@ class Apple extends \yii\db\ActiveRecord
         ];
     }
 
-    public function eat($eated){
-        if($this->state == 'ontree'){
+    public function getColor()
+    {
+        return $this->_color;
+    }
+
+    public function setColor($value)
+    {
+        $this->_color = $value;
+    }
+
+    public function eat($eated)
+    {
+        if ($this->status == 'ontree' || $this->state == 'spoiled') {
             $this->size = 1;
+            $this->eat = $eated;
             throw new NotFoundHttpException('Съесть нельзя, яблоко на дереве');
         } else {
+            $this->eat = $eated;
             $this->size = round(1 - $eated / 100, 2);
         }
     }
 
-    public function fallToGround(){
-        $this->state = 'fell';
+    public function fallToGround()
+    {
+        if ($this->status == 'ontree') {
+            $this->state = 'fell';
+            $this->status = 'fell';
+            $this->fall_date = strtotime('now');
+        }
     }
 
-    public function getApple($color){
+    public function getApple($color)
+    {
         $this->color = $color;
     }
 

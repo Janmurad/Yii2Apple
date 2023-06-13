@@ -2,6 +2,7 @@
 
 namespace backend\controllers;
 
+use Yii;
 use app\models\Apple;
 use app\models\AppleSearch;
 use yii\filters\AccessControl;
@@ -22,7 +23,7 @@ class AppleController extends Controller
         return array_merge(
             parent::behaviors(),
             [
-                'access'=> [
+                'access' => [
                     'class' => AccessControl::class,
                     'except' => ['site/login'],
                     'only' => ['index', 'create'],
@@ -56,6 +57,7 @@ class AppleController extends Controller
      */
     public function actionIndex()
     {
+        Apple::updateAll(['state'=>'spoiled'],['<', 'fall_date', strtotime('-5 hours')]);
         $searchModel = new AppleSearch();
         $dataProvider = $searchModel->search($this->request->queryParams);
 
@@ -78,10 +80,29 @@ class AppleController extends Controller
         ]);
     }
 
-    public function actionNewapple(){
-        $apple = new Apple('green');
-        return $apple->color;
+/*    public function actionNewapple()
+    {
+        $searchModel = new AppleSearch();
+        $dataProvider = $searchModel->search($this->request->queryParams);
+        $dataProvider->query->andFilterWhere(['<', 'fall_date', strtotime('-5 hours')]);
+
+        return $this->render('index', [
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
+        ]);
+    }*/
+
+    public function actionFall($id)
+    {
+        $model = $this->findModel($id);
+
+        $model->fallToGround();
+        $model->save();
+
+        return $this->redirect(Yii::$app->request->referrer ?: Yii::$app->homeUrl);
+
     }
+
 
     /**
      * Creates a new Apple model.
@@ -121,6 +142,25 @@ class AppleController extends Controller
         }
 
         return $this->render('update', [
+            'model' => $model,
+        ]);
+    }
+
+    public function actionEat($id)
+    {
+        $model = $this->findModel($id);
+
+        if ($this->request->isPost && $model->load($this->request->post())) {
+            $model->eat($model->eat);
+            if ($model->save()) {
+                if($model->eat >= 100){
+                    $model->delete();
+                }
+                return $this->redirect(['index']);
+            }
+        }
+
+        return $this->render('eat', [
             'model' => $model,
         ]);
     }
